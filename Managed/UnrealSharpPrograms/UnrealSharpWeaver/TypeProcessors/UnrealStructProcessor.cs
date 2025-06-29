@@ -20,7 +20,7 @@ public static class UnrealStructProcessor
         var structHandlingOrder = new List<TypeDefinition>();
         var structMetadata = new Dictionary<TypeDefinition, StructMetaData>();
 
-        var sortedStructs = structs.Where(unrealStruct => !pushedStructs.Contains(unrealStruct)).ToList();
+        var sortedStructs = structs.ToList();
         sortedStructs.Sort((a, b) =>
         {
             var aMetadata = new StructMetaData(a);
@@ -44,7 +44,7 @@ public static class UnrealStructProcessor
             return 0;
         });
 
-        foreach (var unrealStruct in sortedStructs)
+        foreach (var unrealStruct in sortedStructs.Where(unrealStruct => !pushedStructs.Contains(unrealStruct)))
         {
             structStack.Push(unrealStruct);
             pushedStructs.Add(unrealStruct);
