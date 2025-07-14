@@ -68,24 +68,6 @@ void UCSTraceTypeQueryGlueGenerator::ProcessTraceTypeQuery()
 	UEnum* ObjectTypeEnum = StaticEnum<EObjectTypeQuery>();
 
 	ScriptBuilder.AppendLine();
-	ScriptBuilder.AppendLine(TEXT("public enum ECollisionChannel"));
-	ScriptBuilder.OpenBrace();
-
-	for (int32 i = 0; i < ObjectTypeQuery_MAX; i++)
-	{
-		FString ObjectTypeName = ObjectTypeEnum->GetMetaData(TEXT("ScriptName"), i);
-
-		if (ObjectTypeName.IsEmpty())
-		{
-			continue;
-		}
-		
-		ObjectTypeName.RemoveFromStart(TEXT("ECC_"));
-		ScriptBuilder.AppendLine(FString::Printf(TEXT("%s = %d,"), *ObjectTypeName, i));
-	}
-
-	ScriptBuilder.CloseBrace();
-	ScriptBuilder.AppendLine();
 
 	ScriptBuilder.AppendLine(TEXT("public static class CollisionChannelStatics"));
 	ScriptBuilder.OpenBrace();
