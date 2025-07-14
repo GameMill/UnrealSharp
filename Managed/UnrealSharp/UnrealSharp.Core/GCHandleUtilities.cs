@@ -94,6 +94,5 @@ public static class GCHandleUtilities
         }
 
         return default;
-        
     }
 }

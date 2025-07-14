@@ -101,7 +101,7 @@ public static class UnrealClassProcessor
         staticConstructor.FinalizeMethod();
     }
 
-    public static void EmitFunctionGlueToStaticCtor(FunctionMetaData function, ILProcessor processor, Instruction loadNativeClassField, MethodDefinition staticConstructor)
+    static void EmitFunctionGlueToStaticCtor(FunctionMetaData function, ILProcessor processor, Instruction loadNativeClassField, MethodDefinition staticConstructor)
     {
         try
         {
