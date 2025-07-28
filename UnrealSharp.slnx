@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Managed/" />
+  <Folder Name="/Managed/UnrealSharp/">
+    <Project Path="Managed/UnrealSharp/UnrealSharp.Binds/UnrealSharp.Binds.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.Core/UnrealSharp.Core.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.EditorSourceGenerators/UnrealSharp.EditorSourceGenerators/UnrealSharp.EditorSourceGenerators.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.ExtensionSourceGenerators/UnrealSharp.ExtensionSourceGenerators.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.Log/UnrealSharp.Log.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.Plugins/UnrealSharp.Plugins.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.SourceGenerators/UnrealSharp.SourceGenerators.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp.StaticVars/UnrealSharp.StaticVars.csproj" />
+    <Project Path="Managed/UnrealSharp/UnrealSharp/UnrealSharp.csproj" />
+  </Folder>
+  <Folder Name="/Managed/UnrealSharpPrograms/">
+    <Project Path="Managed/UnrealSharpPrograms/UnrealSharpBuildTool/UnrealSharpBuildTool.csproj" />
+    <Project Path="Managed/UnrealSharpPrograms/UnrealSharpWeaver/UnrealSharpWeaver.csproj" />
+  </Folder>
+  <Folder Name="/Source/">
+    <Project Path="Source/UnrealSharpManagedGlue/UnrealSharpManagedGlue.ubtplugin.csproj" />
+  </Folder>
+</Solution>

@@ -8,6 +8,7 @@
 #include "CSUnrealSharpEditorSettings.h"
 #include "DesktopPlatformModule.h"
 #include "IDirectoryWatcher.h"
+#include "IPluginBrowser.h"
 #include "ISettingsModule.h"
 #include "LevelEditor.h"
 #include "SourceCodeNavigation.h"
@@ -16,13 +17,16 @@
 #include "AssetActions/CSAssetTypeAction_CSBlueprint.h"
 #include "Engine/AssetManager.h"
 #include "Engine/InheritableComponentHandler.h"
+#include "Features/IPluginsEditorFeature.h"
 #include "UnrealSharpCore/CSManager.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Interfaces/IMainFrameModule.h"
+#include "Interfaces/IPluginManager.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Logging/StructuredLog.h"
 #include "Misc/ScopedSlowTask.h"
+#include "Plugins/CSPluginTemplateDescription.h"
 #include "Slate/CSNewProjectWizard.h"
 #include "TypeGenerator/Register/CSGeneratedClassBuilder.h"
 #include "UnrealSharpProcHelper/CSProcHelper.h"
@@ -84,22 +88,23 @@ void FUnrealSharpEditorModule::StartupModule()
 			SuggestProjectSetup();
 		});
 	}
-	
+
 	// Make managed types not available for edit in the editor
 	{
 		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
 		IAssetTools& AssetToolsRef = AssetToolsModule.Get();
-	
+
 		Manager->ForEachManagedPackage([&AssetToolsRef](const UPackage* Package)
 		{
 			AssetToolsRef.GetWritableFolderPermissionList()->AddDenyListItem(Package->GetFName(), Package->GetFName());
 		});
 	}
-	
+
 	FCSStyle::Initialize();
 
 	RegisterCommands();
 	RegisterMenu();
+    RegisterPluginTemplates();
 
 	UCSManager& CSharpManager = UCSManager::Get();
 	CSharpManager.LoadPluginAssemblyByName(TEXT("UnrealSharp.Editor"));
@@ -110,6 +115,7 @@ void FUnrealSharpEditorModule::ShutdownModule()
 	FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
 	UToolMenus::UnRegisterStartupCallback(this);
 	UToolMenus::UnregisterOwner(this);
+    UnregisterPluginTemplates();
 }
 
 void FUnrealSharpEditorModule::OnCSharpCodeModified(const TArray<FFileChangeData>& ChangedFiles)
@@ -133,7 +139,7 @@ void FUnrealSharpEditorModule::OnCSharpCodeModified(const TArray<FFileChangeData
 		FPaths::NormalizeFilename(NormalizedFileName);
 
 		// Skip ProjectGlue files
-		if (NormalizedFileName.Contains(TEXT("ProjectGlue")))
+		if (NormalizedFileName.Contains(TEXT("ProjectGlue")) || NormalizedFileName.Contains("PluginGlue"))
 		{
 			continue;
 		}
@@ -208,7 +214,7 @@ void FUnrealSharpEditorModule::StartHotReload(bool bRebuild, bool bPromptPlayerW
 	const UCSUnrealSharpEditorSettings* Settings = GetDefault<UCSUnrealSharpEditorSettings>();
 	FString BuildConfiguration = Settings->GetBuildConfigurationString();
 	ECSLoggerVerbosity LogVerbosity = Settings->LogVerbosity;
-	
+
 	FString ExceptionMessage;
 	if (!ManagedUnrealSharpEditorCallbacks.Build(*SolutionPath, *OutputPath, *BuildConfiguration, &AllProjects, LogVerbosity, &ExceptionMessage, bRebuild))
 	{
@@ -277,7 +283,7 @@ void FUnrealSharpEditorModule::StartHotReload(bool bRebuild, bool bPromptPlayerW
 	HotReloadStatus = Inactive;
 	bHotReloadFailed = false;
 	bDirtyGlue = false;
-	
+
 	UE_LOG(LogUnrealSharpEditor, Log, TEXT("Hot reload took %.2f seconds to execute"), FPlatformTime::Seconds() - StartTime);
 }
 
@@ -816,11 +822,44 @@ void FUnrealSharpEditorModule::RegisterMenu()
 	Section.AddEntry(Entry);
 }
 
+void FUnrealSharpEditorModule::RegisterPluginTemplates()
+{
+    IPluginBrowser& PluginBrowser = IPluginBrowser::Get();
+    const FString PluginBaseDir = FPaths::ConvertRelativePathToFull(IPluginManager::Get().FindPlugin(UE_PLUGIN_NAME)->GetBaseDir());
+
+    const FText BlankTemplateName = LOCTEXT("UnrealSharp_BlankLabel", "C++/C# Joint");
+	const FText CSharpOnlyTemplateName = LOCTEXT("UnrealSharp_CSharpOnlyLabel", "C# Only");
+
+	const FText BlankDescription = LOCTEXT("UnrealSharp_BlankTemplateDesc", "Create a blank plugin with a minimal amount of C++ and C# code.");
+	const FText CSharpOnlyDescription = LOCTEXT("UnrealSharp_CSharpOnlyTemplateDesc", "Create a blank plugin that can only contain content and C# scripts.");
+
+    const TSharedRef<FPluginTemplateDescription> BlankTemplate = MakeShared<FCSPluginTemplateDescription>(BlankTemplateName, BlankDescription,
+        PluginBaseDir / TEXT("Templates") / TEXT("Blank"), true, EHostType::Runtime, ELoadingPhase::Default, false, true);
+    const TSharedRef<FPluginTemplateDescription> CSharpOnlyTemplate = MakeShared<FCSPluginTemplateDescription>(CSharpOnlyTemplateName, CSharpOnlyDescription,
+        PluginBaseDir / TEXT("Templates") / TEXT("CSharpOnly"), true, EHostType::Runtime, ELoadingPhase::Default, false, false);
+
+    PluginBrowser.RegisterPluginTemplate(BlankTemplate);
+    PluginBrowser.RegisterPluginTemplate(CSharpOnlyTemplate);
+
+    PluginTemplates.Add(BlankTemplate);
+    PluginTemplates.Add(CSharpOnlyTemplate);
+}
+
+void FUnrealSharpEditorModule::UnregisterPluginTemplates()
+{
+    IPluginBrowser& PluginBrowser = IPluginBrowser::Get();
+    for (const TSharedRef<FPluginTemplateDescription>& Template : PluginTemplates)
+    {
+        PluginBrowser.UnregisterPluginTemplate(Template);
+    }
+}
+
+
 void FUnrealSharpEditorModule::OnPIEShutdown(bool IsSimulating)
 {
 	// Replicate UE behavior, which forces a garbage collection when exiting PIE.
 	ManagedUnrealSharpEditorCallbacks.ForceManagedGC();
-	
+
 	if (bHasQueuedHotReload)
 	{
 		bHasQueuedHotReload = false;
@@ -960,7 +999,7 @@ void FUnrealSharpEditorModule::RefreshAffectedBlueprints()
 		{
 			return;
 		}
-		
+
 		TArray<UK2Node*> AllNodes;
 		FBlueprintEditorUtils::GetAllNodesOfClass<UK2Node>(Blueprint, AllNodes);
 
