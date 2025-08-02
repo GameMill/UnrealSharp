@@ -175,7 +175,7 @@ FString FCSProcHelper::GetRuntimeConfigPath()
 
 FString FCSProcHelper::GetUserAssemblyDirectory()
 {
-	return FPaths::Combine(FPaths::ProjectDir(), "Binaries", "Managed");
+	return FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), "Binaries", "Managed"));
 }
 
 FString FCSProcHelper::GetUnrealSharpMetadataPath()
