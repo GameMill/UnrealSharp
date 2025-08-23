@@ -72,11 +72,11 @@ public static class UnrealStructProcessor
             }
         }
         assemblyMetadata.StructMetaData = structMetadata.Values.ToList();
-        
-        foreach (var currentStruct in structHandlingOrder)
-        {
-            ProcessStruct(currentStruct, structMetadata[currentStruct]);
-        }
+
+        //foreach (var currentStruct in structHandlingOrder)
+        //{
+        //    ProcessStruct(currentStruct, structMetadata[currentStruct]);
+        //}
     }
     
     private static void ProcessStruct(TypeDefinition structTypeDefinition, StructMetaData metadata)

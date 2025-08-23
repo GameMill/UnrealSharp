@@ -17,10 +17,10 @@ public static class UnrealClassProcessor
             ProcessParentClass(classDef, classes, rewrittenClasses, assemblyMetadata);
         }
         
-        foreach (ClassMetaData classMetaData in assemblyMetadata.ClassMetaData)
-        {
-            classMetaData.PostWeaveCleanup();
-        }
+        //foreach (ClassMetaData classMetaData in assemblyMetadata.ClassMetaData)
+        //{
+         //   classMetaData.PostWeaveCleanup();
+        //}
     }
     
     private static void ProcessParentClass(TypeDefinition type, IList<TypeDefinition> classes, HashSet<TypeDefinition> rewrittenClasses, ApiMetaData assemblyMetadata)
@@ -32,21 +32,21 @@ public static class UnrealClassProcessor
             throw new Exception($"{type.FullName} is marked with UClass but doesn't inherit from CoreUObject.Object.");
         }
         
-        if (baseType != null && baseType.Module == type.Module && classes.Contains(baseType) && !rewrittenClasses.Contains(baseType))
-        {
-            ProcessParentClass(baseType, classes, rewrittenClasses, assemblyMetadata);
-        }
+        //if (baseType != null && baseType.Module == type.Module && classes.Contains(baseType) && !rewrittenClasses.Contains(baseType))
+        //{
+        //    ProcessParentClass(baseType, classes, rewrittenClasses, assemblyMetadata);
+        //}
 
-        if (rewrittenClasses.Contains(type))
-        {
-            return;
-        }
+        //if (rewrittenClasses.Contains(type))
+        //{
+       //     return;
+       // }
         
         ClassMetaData classMetaData = new ClassMetaData(type);
         assemblyMetadata.ClassMetaData.Add(classMetaData);
         
-        ProcessClass(type, classMetaData);
-        rewrittenClasses.Add(type);
+        //ProcessClass(type, classMetaData);
+        //rewrittenClasses.Add(type);
     }
     
     private static void ProcessClass(TypeDefinition classTypeDefinition, ClassMetaData metadata)

@@ -16,7 +16,7 @@ public static class UnrealInterfaceProcessor
             TypeDefinition interfaceType = interfaces[i];
             assemblyMetadata.InterfacesMetaData.Add(new InterfaceMetaData(interfaceType));
             
-            CreateInterfaceMarshaller(interfaceType);
+            //CreateInterfaceMarshaller(interfaceType);
         }
     }
 

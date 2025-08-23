@@ -204,6 +204,8 @@ void FUnrealSharpEditorModule::StartHotReload(bool bRebuild, bool bPromptPlayerW
 	FString BuildConfiguration = Settings->GetBuildConfigurationString();
 	ECSLoggerVerbosity LogVerbosity = Settings->LogVerbosity;
 
+	double StartTimeRefresh = FPlatformTime::Seconds();
+
 	FString ExceptionMessage;
 	if (!ManagedUnrealSharpEditorCallbacks.Build(*SolutionPath, *OutputPath, *BuildConfiguration, LogVerbosity, &ExceptionMessage, bRebuild))
 	{
@@ -212,6 +214,8 @@ void FUnrealSharpEditorModule::StartHotReload(bool bRebuild, bool bPromptPlayerW
 	 	FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(ExceptionMessage), FText::FromString(TEXT("Building C# Project Failed")));
 		return;
 	}
+	UE_LOG(LogUnrealSharpEditor, Log, TEXT("ManagedUnrealSharpEditorCallbacks.Build took %.2f seconds to execute"), FPlatformTime::Seconds() - StartTimeRefresh);
+
 
 	UCSManager& CSharpManager = UCSManager::Get();
 	bool bUnloadFailed = false;
@@ -267,6 +271,7 @@ void FUnrealSharpEditorModule::StartHotReload(bool bRebuild, bool bPromptPlayerW
 	}
 
 	Progress.EnterProgressFrame(1, LOCTEXT("HotReload", "Refreshing Affected Blueprints..."));
+
 	RefreshAffectedBlueprints();
 
 	HotReloadStatus = Inactive;

@@ -114,7 +114,7 @@ public static class ManagedUnrealSharpEditorCallbacks
                 }
             }
 
-            Weave(outputPath, buildConfigurationString);
+            //Weave(outputPath, buildConfigurationString);
         }
         catch (Exception exception)
         {

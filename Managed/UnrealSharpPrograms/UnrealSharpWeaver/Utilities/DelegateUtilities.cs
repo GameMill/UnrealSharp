@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mono.Cecil;
 
 namespace UnrealSharpWeaver.Utilities;
@@ -31,4 +33,7 @@ public static class DelegateUtilities
         functionName += "__DelegateSignature";
         return functionName;
     }
+
+
+
 }

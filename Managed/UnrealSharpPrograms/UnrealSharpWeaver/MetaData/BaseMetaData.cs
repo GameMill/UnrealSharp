@@ -1,4 +1,6 @@
 ﻿using System.Globalization;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
@@ -34,6 +36,9 @@ public class BaseMetaData
         AddDefaultCategory();   // Add Category="Default" if no category yet added
         AddBlueprintAccess();   // Add default Blueprint access if not already added
     }
+
+
+
 
     public void TryAddMetaData(string key, string value = "")
     {

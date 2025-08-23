@@ -68,7 +68,6 @@ public static class Program
 	        }
 
 	        CreateGlueProjects();
-	        CopyGlobalJson();
 	    }
 	    catch (Exception ex)
 	    {
@@ -166,24 +165,6 @@ public static class Program
         AddPluginDependencies(projectName, csprojPath, dependencyPaths);
     }
     
-    private static void CopyGlobalJson()
-    {
-	    string globalJsonPath = Path.Combine(ManagedPath, "global.json");
-	    
-	    if (!File.Exists(globalJsonPath))
-	    {
-		    throw new FileNotFoundException("global.json not found in Managed directory.", globalJsonPath);
-	    }
-		
-	    string destinationPath = Path.Combine(Factory.Session.ProjectDirectory!, "global.json");
-		
-	    if (File.Exists(destinationPath))
-	    {
-		    File.Delete(destinationPath);
-	    }
-		
-	    File.Copy(globalJsonPath, destinationPath);
-    }
 
     private static void AddPluginDependencies(string projectName, string projectPath, IEnumerable<string>? dependencies)
     {

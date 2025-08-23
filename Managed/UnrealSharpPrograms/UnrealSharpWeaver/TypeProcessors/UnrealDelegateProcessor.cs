@@ -44,13 +44,13 @@ public static class UnrealDelegateProcessor
             
             delegateMetaData.Add(newDelegate);
             
-            if (invokerMethod.Parameters.Count == 0)
-            {
-                continue;
-            }
+            //if (invokerMethod.Parameters.Count == 0)
+            //{
+            //    continue;
+            //}
             
-            WriteInvokerMethod(type, invokerMethod, functionMetaData);
-            ProcessInitialize(type, functionMetaData);
+            //WriteInvokerMethod(type, invokerMethod, functionMetaData);
+            //ProcessInitialize(type, functionMetaData);
         }
     }
     
@@ -71,6 +71,7 @@ public static class UnrealDelegateProcessor
         
         foreach (TypeDefinition type in delegateExtensions)
         {
+            /*
             TypeDefinition marshaller = assembly.CreateNewClass(type.Namespace, type.Name + "Marshaller", TypeAttributes.Class | TypeAttributes.Public);
             
             // Create a delegate from the marshaller
@@ -97,7 +98,8 @@ public static class UnrealDelegateProcessor
             MethodReference? constructorDelegate = type.FindMethod(".ctor", true, [delegateDataStruct]);
             processor.Emit(OpCodes.Newobj, constructorDelegate);
             processor.Emit(OpCodes.Ret);
-            
+            */
+
             MethodReference? invokerMethod = type.FindMethod("Invoker");
             
             if (invokerMethod == null)
@@ -116,8 +118,8 @@ public static class UnrealDelegateProcessor
                 continue;
             }
             
-            WriteInvokerMethod(type, invokerMethod, functionMetaData);
-            ProcessInitialize(type, functionMetaData);
+            //WriteInvokerMethod(type, invokerMethod, functionMetaData);
+            //ProcessInitialize(type, functionMetaData);
         }
     }
 

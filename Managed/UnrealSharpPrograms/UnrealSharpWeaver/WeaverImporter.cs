@@ -34,16 +34,16 @@ public class WeaverImporter
     public const string UStructCallbacks = "UStructExporter";
 
     public const string GeneratedTypeAttribute = "GeneratedTypeAttribute";
-    
+
     public MethodReference? UFunctionAttributeConstructor => UnrealSharpAssembly.FindType("UFunctionAttribute", "UnrealSharp.Attributes")?.FindMethod(".ctor");
     public MethodReference? BlueprintInternalUseAttributeConstructor => UnrealSharpAssembly.FindType("BlueprintInternalUseOnlyAttribute", "UnrealSharp.Attributes.MetaTags")?.FindMethod(".ctor");
-    
+
     public AssemblyDefinition UnrealSharpAssembly => FindAssembly(UnrealSharpNamespace);
     public AssemblyDefinition UnrealSharpCoreAssembly => FindAssembly(UnrealSharpNamespace + ".Core");
-    
+
     public AssemblyDefinition CurrentWeavingAssembly = null!;
     public List<AssemblyDefinition> AllProjectAssemblies = [];
-    
+
     public MethodReference NativeObjectGetter = null!;
     public TypeDefinition IntPtrType = null!;
     public MethodReference IntPtrAdd = null!;
@@ -67,42 +67,42 @@ public class WeaverImporter
     public MethodReference GetNativeStructSizeMethod = null!;
     public MethodReference GetSignatureFunction = null!;
     public MethodReference InitializeStructMethod = null!;
-    
+
     public MethodReference InvokeNativeFunctionMethod = null!;
     public MethodReference InvokeNativeNetFunction = null!;
     public MethodReference InvokeNativeFunctionOutParms = null!;
 
     public MethodReference GeneratedTypeCtor = null!;
-    
+
     public TypeDefinition UObjectDefinition = null!;
     public TypeDefinition UActorComponentDefinition = null!;
-    
+
     public TypeDefinition ScriptInterfaceWrapper = null!;
     public TypeDefinition ScriptInterfaceMarshaller = null!;
     public TypeReference ManagedObjectHandle = null!;
     public TypeReference UnmanagedDataStore = null!;
-    
+
     public MethodReference BlittableTypeConstructor = null!;
 
     public DefaultAssemblyResolver AssemblyResolver = null!;
-    
+
     public static void Shutdown()
     {
         if (_instance == null)
         {
             return;
         }
-        
+
         foreach (AssemblyDefinition assembly in _instance.AllProjectAssemblies)
         {
             assembly.Dispose();
         }
-        
+
         _instance.AllProjectAssemblies = [];
         _instance.CurrentWeavingAssembly = null!;
         _instance = null;
     }
-    
+
     static AssemblyDefinition FindAssembly(string assemblyName)
     {
         return Instance.AssemblyResolver.Resolve(new AssemblyNameReference(assemblyName, new Version(0, 0)));
@@ -111,14 +111,14 @@ public class WeaverImporter
     public void ImportCommonTypes(AssemblyDefinition userAssembly)
     {
         CurrentWeavingAssembly = userAssembly;
-        
+
         TypeSystem typeSystem = CurrentWeavingAssembly.MainModule.TypeSystem;
-        
+
         Int32TypeRef = typeSystem.Int32;
         UInt64TypeRef = typeSystem.UInt64;
         VoidTypeRef = typeSystem.Void;
         ByteTypeRef = typeSystem.Byte;
-        
+
         IntPtrType = typeSystem.IntPtr.Resolve();
         IntPtrAdd = IntPtrType.FindMethod("Add")!;
         IntPtrZero = IntPtrType.FindField("Zero");
@@ -126,46 +126,46 @@ public class WeaverImporter
 
         UnrealSharpObjectType = UnrealSharpCoreAssembly.FindType(UnrealSharpObject, UnrealSharpCoreNamespace)!;
         IInterfaceType = UnrealSharpAssembly.FindType("IInterface", CoreUObjectNamespace)!.Resolve();
-        
+
         TypeDefinition unrealSharpObjectType = UnrealSharpObjectType.Resolve();
         NativeObjectGetter = unrealSharpObjectType.FindMethod("get_NativeObject")!;
 
         GetNativeFunctionFromInstanceAndNameMethod = FindExporterMethod(TypeDefinitionUtilities.UClassCallbacks, "CallGetNativeFunctionFromInstanceAndName");
-        
+
         GetNativeStructFromNameMethod = FindExporterMethod(CoreUObjectCallbacks, "CallGetNativeStructFromName");
         GetNativeClassFromNameMethod = FindExporterMethod(CoreUObjectCallbacks, "CallGetNativeClassFromName");
         GetNativeInterfaceFromNameMethod = FindExporterMethod(CoreUObjectCallbacks, "CallGetNativeInterfaceFromName");
-        
+
         GetPropertyOffsetFromNameMethod = FindExporterMethod(FPropertyCallbacks, "CallGetPropertyOffsetFromName");
         GetPropertyOffset = FindExporterMethod(FPropertyCallbacks, "CallGetPropertyOffset");
-        
+
         GetNativePropertyFromNameMethod = FindExporterMethod(FPropertyCallbacks, "CallGetNativePropertyFromName");
-        
+
         GetNativeFunctionFromClassAndNameMethod = FindExporterMethod(TypeDefinitionUtilities.UClassCallbacks, "CallGetNativeFunctionFromClassAndName");
         GetNativeFunctionParamsSizeMethod = FindExporterMethod(UFunctionCallbacks, "CallGetNativeFunctionParamsSize");
-        
+
         GetNativeStructSizeMethod = FindExporterMethod(UScriptStructCallbacks, "CallGetNativeStructSize");
-        
+
         InvokeNativeFunctionMethod = FindExporterMethod(UObjectCallbacks, "CallInvokeNativeFunction");
         InvokeNativeNetFunction = FindExporterMethod(UObjectCallbacks, "CallInvokeNativeNetFunction");
         InvokeNativeFunctionOutParms = FindExporterMethod(UObjectCallbacks, "CallInvokeNativeFunctionOutParms");
-        
+
         GetSignatureFunction = FindExporterMethod(MulticastDelegatePropertyCallbacks, "CallGetSignatureFunction");
-        
+
         InitializeStructMethod = FindExporterMethod(UStructCallbacks, "CallInitializeStruct");
-        
+
         UObjectDefinition = UnrealSharpAssembly.FindType("UObject", CoreUObjectNamespace)!.Resolve();
         UActorComponentDefinition = UnrealSharpAssembly.FindType("UActorComponent", EngineNamespace)!.Resolve();
-        
+
         TypeReference blittableType = UnrealSharpCoreAssembly.FindType(TypeDefinitionUtilities.BlittableTypeAttribute, UnrealSharpCoreAttributesNamespace)!;
         BlittableTypeConstructor = blittableType.FindMethod(".ctor")!;
 
         TypeReference generatedType = UnrealSharpCoreAssembly.FindType(GeneratedTypeAttribute, UnrealSharpCoreAttributesNamespace)!;
         GeneratedTypeCtor = generatedType.FindMethod(".ctor")!;
-        
+
         ScriptInterfaceWrapper = UnrealSharpAssembly.FindType("IScriptInterface", CoreUObjectNamespace)!.Resolve();
         ScriptInterfaceMarshaller = UnrealSharpAssembly.FindType("ScriptInterfaceMarshaller`1", CoreUObjectNamespace)!.Resolve();
-        
+
         ManagedObjectHandle = UnrealSharpAssembly.FindType("FSharedGCHandle", "UnrealSharp.UnrealSharpCore")!.Resolve();
         UnmanagedDataStore = UnrealSharpAssembly.FindType("FUnmanagedDataStore", "UnrealSharp.UnrealSharpCore")!.Resolve();
     }
@@ -190,7 +190,7 @@ public class WeaverImporter
                 }
             }
         }
-        
+
         throw new Exception("Could not find method " + findMethod + " in class " + findClass + " in namespace " + findNamespace);
     }
 
