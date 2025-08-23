@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<ExcludeFromWeaver>true</ExcludeFromWeaver>
+		<!-- Force NuGet runtime assemblies into output -->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- MSBuild base packages -->
+		<PackageReference Include="Microsoft.Build.Framework" Version="17.14.8" />
+		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.8" />
+
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" PrivateAssets="all">
+			<IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" PrivateAssets="all">
+			<IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="UnrealSharp">
+	    <HintPath>..\Binaries\Managed\UnrealSharp.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+</Project>

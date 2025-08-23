@@ -1,0 +1,90 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>annotations</Nullable>
+		<CopyLocalLockFileAssembliesName>true</CopyLocalLockFileAssembliesName>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<EnableDynamicLoading>true</EnableDynamicLoading>
+		<MSBuildDisableNodeReuse>true</MSBuildDisableNodeReuse>
+		<!-- Debugging only -->
+		<WeaveStagingDir>$(IntermediateOutputPath)weave\</WeaveStagingDir>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="LanguageExt.Core" Version="4.4.9" />
+		<Reference Include="UnrealSharp">
+			<HintPath>..\..\Plugins\UnrealSharp\Binaries\Managed\net9.0\UnrealSharp.dll</HintPath>
+		</Reference>
+		<Reference Include="UnrealSharp.Core">
+			<HintPath>..\..\Plugins\UnrealSharp\Binaries\Managed\net9.0\UnrealSharp.Core.dll</HintPath>
+		</Reference>
+		<!--
+    <Analyzer Include="..\..\Plugins\UnrealSharp\Binaries\Managed\UnrealSharp.SourceGenerators.dll" />
+    -->
+		<ProjectReference Include="..\USPerformanceTest.Glue\USPerformanceTest.Glue.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<SourceFiles Include="**\*.cs" Exclude="obj\**\*.*" />
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Remove="weave\**" />
+		<EmbeddedResource Remove="weave\**" />
+		<None Remove="weave\**" />
+		<SourceFiles Remove="weave\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="index.php" />
+		<None Remove="weaver.txt" />
+	</ItemGroup>
+
+	<Target Name="CleanWeaveDir" AfterTargets="Clean">
+		<RemoveDir Directories=".\weave" />
+		<Delete Files=".\weaver.txt" />
+	</Target>
+
+
+	<UsingTask TaskName="WeaveFile" AssemblyFile="..\Weaver\bin\Debug\netstandard2.1\Weaver.dll"
+	  TaskFactory="TaskHostFactory" />
+	<Target Name="WeaveSources" BeforeTargets="CoreCompile" Inputs="@(SourceFiles)"
+	  Outputs="@(SourceFiles->'$(WeaveStagingDir)%(RecursiveDir)%(Filename).weaved.cs')">
+
+		<!-- Compute per-file output paths in the staging dir -->
+		<ItemGroup>
+			<WeaveInputs Include="@(SourceFiles)">
+				<OutputPath>$(WeaveStagingDir)%(RecursiveDir)%(Filename).weaved.cs</OutputPath>
+			</WeaveInputs>
+		</ItemGroup>
+
+
+		<!-- Batch per file -->
+		<WeaveFile Source="%(WeaveInputs.FullPath)" Output="%(WeaveInputs.OutputPath)" />
+	</Target>
+
+	<!-- Step 2: Compile from staged files -->
+	<Target Name="UseWeavedFilesForCompile" DependsOnTargets="WeaveSources"
+	  BeforeTargets="CoreCompile">
+
+		<!-- Remove the default .cs list -->
+		<ItemGroup>
+			<Compile Remove="@(Compile)" />
+		</ItemGroup>
+
+		<!-- Add .weaved files instead -->
+		<ItemGroup>
+			<Compile Include="weave\**\*.cs" />
+		</ItemGroup>
+
+		<Message Importance="High" Text="Compiling from staged .weaved files..." />
+	</Target>
+	<!-- Step 3: Marge metadata after build -->
+	<UsingTask TaskName="JoinMetaData" AssemblyFile="..\Weaver\bin\Debug\netstandard2.1\Weaver.dll" />
+
+	<Target Name="RunJoinMetaData" AfterTargets="Build">
+		<Message Importance="High" Text="Marging MetaData and Putting it into the output dir" />
+
+		<JoinMetaData AssemblyName="$(AssemblyName)" WeaveRoot="$(WeaveStagingDir)" OutputPath="$(OutputPath)" />
+	</Target>
+
+</Project>
