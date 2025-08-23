@@ -13,6 +13,7 @@ public static class Program
 
     public static void Weave(WeaverOptions weaverOptions)
     {
+        return;
         try
         {
             WeaverOptions = weaverOptions;
@@ -27,6 +28,7 @@ public static class Program
 
     public static int Main(string[] args)
     {
+        return 0;
         try
         {
             WeaverOptions = WeaverOptions.ParseArguments(args);
@@ -81,7 +83,7 @@ public static class Program
         ICollection<AssemblyDefinition> orderedUserAssemblies = OrderInputAssembliesByReferences(assembliesToProcess);
         WeaverImporter.Instance.AllProjectAssemblies = assembliesToProcess;
 
-        WriteUnrealSharpMetadataFile(orderedUserAssemblies, outputDirInfo);
+        //WriteUnrealSharpMetadataFile(orderedUserAssemblies, outputDirInfo);
         ProcessOrderedAssemblies(orderedUserAssemblies, outputDirInfo);
     }
 
@@ -116,7 +118,7 @@ public static class Program
             try
             {
                 string outputPath = Path.Combine(outputDirectory.FullName, Path.GetFileName(assembly.MainModule.FileName));
-                StartWeavingAssembly(assembly, outputPath);
+                //StartWeavingAssembly(assembly, outputPath);
             }
             catch (Exception ex)
             {
