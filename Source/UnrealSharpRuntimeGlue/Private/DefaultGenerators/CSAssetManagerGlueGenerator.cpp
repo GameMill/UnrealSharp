@@ -72,7 +72,17 @@ void UCSAssetManagerGlueGenerator::OnAssetRenamed(const FAssetData& AssetData, c
 
 void UCSAssetManagerGlueGenerator::OnInMemoryAssetCreated(UObject* Object)
 {
-	if (!IsRegisteredAssetType(Object))
+	UClass* AssetClass;
+	if (UBlueprint* Blueprint = Cast<UBlueprint>(Object))
+	{
+		AssetClass = Blueprint->GeneratedClass;
+	}
+	else
+	{
+		AssetClass = Object->GetClass();
+	}
+	
+	if (!IsRegisteredAssetType(AssetClass))
 	{
 		return;
 	}
@@ -103,19 +113,22 @@ bool UCSAssetManagerGlueGenerator::IsRegisteredAssetType(UClass* Class)
 	{
 		return false;
 	}
-
-	UAssetManager& AssetManager = UAssetManager::Get();
-	const UAssetManagerSettings& Settings = AssetManager.GetSettings();
+	
+	const UAssetManagerSettings& Settings = UAssetManager::Get().GetSettings();
 
 	bool bIsPrimaryAsset = false;
 	for (const FPrimaryAssetTypeInfo& PrimaryAssetType : Settings.PrimaryAssetTypesToScan)
 	{
-		if (Class->IsChildOf(PrimaryAssetType.GetAssetBaseClass().Get()))
+		UClass* AssetBaseClass = PrimaryAssetType.GetAssetBaseClass().Get();
+		if (!Class->IsChildOf(AssetBaseClass))
 		{
-			bIsPrimaryAsset = true;
-			break;
+			continue;
 		}
+		
+		bIsPrimaryAsset = true;
+		break;
 	}
+	
 	return bIsPrimaryAsset;
 }
 
@@ -123,43 +136,54 @@ void UCSAssetManagerGlueGenerator::ProcessAssetIds()
 {
 	UAssetManager& AssetManager = UAssetManager::Get();
 	const UAssetManagerSettings& Settings = AssetManager.GetSettings();
-
 	FCSScriptBuilder ScriptBuilder(FCSScriptBuilder::IndentType::Tabs);
 	ScriptBuilder.AppendLine();
 	ScriptBuilder.AppendLine(TEXT("using UnrealSharp.CoreUObject;"));
 	ScriptBuilder.AppendLine();
 	ScriptBuilder.AppendLine(TEXT("public static class AssetIds"));
 	ScriptBuilder.OpenBrace();
-	
+
 	TArray<FPrimaryAssetTypeInfo> SortedPrimaryAssetTypes = Settings.PrimaryAssetTypesToScan;
 	SortedPrimaryAssetTypes.Sort([](const FPrimaryAssetTypeInfo& A, const FPrimaryAssetTypeInfo& B)
-	{
-		return A.PrimaryAssetType.LexicalLess(B.PrimaryAssetType);
-	});
+		{
+			return A.PrimaryAssetType.LexicalLess(B.PrimaryAssetType);
+		});
 
 	for (const FPrimaryAssetTypeInfo& PrimaryAssetType : SortedPrimaryAssetTypes)
 	{
 		TArray<FPrimaryAssetId> PrimaryAssetIdList;
 		AssetManager.GetPrimaryAssetIdList(PrimaryAssetType.PrimaryAssetType, PrimaryAssetIdList);
-		
-		PrimaryAssetIdList.Sort([](const FPrimaryAssetId& A, const FPrimaryAssetId& B)
+
+		if (PrimaryAssetIdList.Num() == 0)
 		{
-			return A.PrimaryAssetName.LexicalLess(B.PrimaryAssetName);
-		});
-		
+			continue;
+		}
+
+		PrimaryAssetIdList.Sort([](const FPrimaryAssetId& A, const FPrimaryAssetId& B)
+			{
+				return A.PrimaryAssetName.LexicalLess(B.PrimaryAssetName);
+			});
+
+		FString ClassName = PrimaryAssetType.PrimaryAssetType.ToString();
+		ClassName = FCSEditorUtilities::ReplaceSpecialCharacters(ClassName);
+
+		ScriptBuilder.AppendLine(FString::Printf(TEXT("public static class %s"), *ClassName));
+		ScriptBuilder.OpenBrace();
+
 		for (const FPrimaryAssetId& AssetType : PrimaryAssetIdList)
 		{
 			FString PrimaryAssetName = AssetType.PrimaryAssetName.ToString();
 			PrimaryAssetName = PrimaryAssetName.Replace(TEXT("Default__"), TEXT(""));
-			
-			FString AssetName = PrimaryAssetType.PrimaryAssetType.ToString() + TEXT(".") + PrimaryAssetName;
-			AssetName = FCSEditorUtilities::ReplaceSpecialCharacters(AssetName);
-			AssetName.RemoveFromEnd(TEXT("_C"));
+			PrimaryAssetName.RemoveFromEnd(TEXT("_C"));
+			PrimaryAssetName = FCSEditorUtilities::ReplaceSpecialCharacters(PrimaryAssetName);
 			
 			ScriptBuilder.AppendLine(FString::Printf(
-				TEXT("public static readonly FPrimaryAssetId %s = new(\"%s\", \"%s\");"),
-				*AssetName, *AssetType.PrimaryAssetType.GetName().ToString(), *AssetType.PrimaryAssetName.ToString()));
+				TEXT("public static readonly FPrimaryAssetId %s = new(nameof(%s), \"%s\");"),
+				*PrimaryAssetName, *AssetType.PrimaryAssetType.GetName().ToString(), *AssetType.PrimaryAssetName.ToString()));
 		}
+
+		ScriptBuilder.CloseBrace();
+		ScriptBuilder.AppendLine();
 	}
 
 	ScriptBuilder.CloseBrace();
